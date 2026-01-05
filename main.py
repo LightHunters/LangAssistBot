@@ -4,8 +4,14 @@ from aiogram.types import Message,CallbackQuery ,ReplyKeyboardMarkup , KeyboardB
 from aiogram.enums import ParseMode
 import os
 from dotenv import load_dotenv
+from pydantic import BaseModel
+from langchain_openai import ChatOpenAI
+from langchain_anthropic import ChatAnthropic
 
 load_dotenv()
+
+llm = ChatOpenAI(model="gpt-4.1")
+response = llm.invoke("who is the CEO of Apple?")
 
 dp = Dispatcher()
 
