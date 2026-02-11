@@ -1,44 +1,29 @@
 import asyncio
 import logging
 from aiogram import Bot, Dispatcher
-from aiogram.client.default import DefaultBotProperties
-from aiogram.fsm.storage.memory import MemoryStorage
-
 import config
-import mongo
-from handlers.common import router as common_router
-from handlers.ai import router as ai_router
-from scheduler import start_scheduler
+from handlers import common, ai
 
+# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 async def main():
     if not config.BOT_TOKEN:
-        raise RuntimeError("BOT_TOKEN is not set in environment")
+        raise RuntimeError("BOT_TOKEN is not set in .env file")
 
+    bot = Bot(token=config.BOT_TOKEN)
+    dp = Dispatcher()
 
-    await mongo.init_db()
+    # Include routers
+    dp.include_router(common.router)
+    dp.include_router(ai.router)
 
-    bot = Bot(
-        token=config.BOT_TOKEN,
-        default=DefaultBotProperties(parse_mode="HTML")
-    )
-
-    storage = MemoryStorage()
-    dp = Dispatcher(storage=storage)
-
-    dp.include_router(common_router)
-    dp.include_router(ai_router)
-
-   
-    start_scheduler(bot)
-
-    logger.info("Bot started")
-    try:
-        await dp.start_polling(bot)
-    finally:
-        await bot.session.close()
+    logger.info("Starting bot...")
+    await dp.start_polling(bot)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except (KeyboardInterrupt, SystemExit):
+        logger.info("Bot stopped!")
